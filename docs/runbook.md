@@ -8,6 +8,42 @@ cd C:\Users\j\Desktop\fdl-mcp
 uv run --python 3.11 --with ".[dev]" -m fdl_mcp.server
 ```
 
+## 测试阶段 save-only 流程（严禁 publish / 定时）
+
+适用场景：真实环境联调时，仅验证开发态写链路 save 闭环。
+
+1. 配置工具白名单护栏（强制只放行 save 所需工具）。
+
+```powershell
+$env:FDL_ALLOWED_TOOLS='fdl_dev_configure_chrome_session,fdl_dev_build_db_to_db_workflow,fdl_dev_save_work,fdl_dev_save_db_to_db_workflow'
+```
+
+说明：
+- `fdl_dev_save_work` 与 `fdl_dev_save_db_to_db_workflow` 二选一即可；可按实际精简白名单。
+- 必须显式排除：`fdl_dev_publish_work_check`、`fdl_dev_publish_work`、所有调度相关工具。
+
+2. 从已登录页面提取会话并调用 `fdl_dev_configure_chrome_session(page_data)`。
+   - 必须包含：`origin`、`cookie(含 fine_auth_token)`、`frontSeed`。
+
+3. 在目标（如 `DEMO示例`）构造或复用 save payload。
+
+4. 仅调用一次 save 工具：
+   - `fdl_dev_save_work(payload)` 或
+   - `fdl_dev_save_db_to_db_workflow(...)`
+
+5. 验证结果并记录：
+   - HTTP `200`
+   - endpoint 为 `/webroot/decision/fdl/dev/work/save`
+   - 返回体可解析（或符合 `{"raw": ...}` 预期）
+   - 记录 `trace_id`、work 标识、时间戳至 `docs/handoff.md`
+
+### 硬停止条件
+
+出现以下任一情况必须立即停止并回滚到 save-only 范围：
+- 触发 `fdl_dev_publish_work_check`
+- 触发 `fdl_dev_publish_work`
+- 触发任何 schedule / execute / publish 相关操作
+
 ## 常见故障处理
 
 ### 1. `FDL_AUTH_*` 认证失败

@@ -12,7 +12,20 @@
 |---|---|
 | `aksk` | HMAC-SHA256 签名，设置 `X-FDL-Client-Id`、`X-FDL-Timestamp`、`X-FDL-Signature`、`Authorization: HMAC-SHA256` 头 |
 | `appcode` | 兼容模式，设置 `AppCode` 头 |
-| `fine_auth_token` | Bearer Token，设置 `Authorization: Bearer <token>` 头 |
+| `fine_auth_token` | 写链路对齐浏览器：同时发送 `Authorization: Bearer <token>` 与 `Cookie: fine_auth_token=<token>`（可带完整 cookie header） |
+
+## 开发态写链路安全约束
+
+- 适用接口：`/webroot/decision/fdl/dev/work/save`、`/webroot/decision/fdl/dev/work/publish/check`、`/webroot/decision/fdl/dev/work/publish`。
+- 写请求必须使用 `fdl-encrypt: encrypted`；读取类请求使用 `fdl-encrypt: plaintext`。
+- 当响应头包含 `alreadyencrypted: true` 时，MCP 会自动解密响应。
+- 解密后如果是 JSON，直接返回对象；若非 JSON，返回 `{"raw": <plaintext>}`。
+
+## 加密算法边界
+
+- 当前环境已验证链路为：`frontSeed + AES-ECB + PKCS7 + Base64`。
+- 当前实现据此在本地执行加密/解密；`FDL_ENCRYPT_KEY` 来源应为页面 `Dec.system.frontSeed`。
+- 以上结论只对当前验证环境成立；其它环境可能切换到 SM4 / customEncrypt / 其它实现，需单独抓包与联调验证后再启用。
 
 ## 策略守卫（PolicyGuard）
 

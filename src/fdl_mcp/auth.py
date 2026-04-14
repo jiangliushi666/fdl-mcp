@@ -4,7 +4,7 @@ import hashlib
 import hmac
 import time
 from dataclasses import dataclass
-from typing import Callable, Protocol
+from typing import Callable, Mapping, Protocol
 from urllib.parse import parse_qsl, urlencode, urlsplit
 
 import httpx
@@ -83,9 +83,22 @@ class AppCodeAuth:
 @dataclass
 class FineAuthTokenAuth:
     token: str
+    cookie_header: str | None = None
 
     def apply(self, request: httpx.Request) -> None:
         request.headers["Authorization"] = f"Bearer {self.token}"
+        if self.cookie_header:
+            request.headers["Cookie"] = self.cookie_header
+            return
+        existing_cookie = request.headers.get("Cookie", "").strip()
+        fine_cookie = f"fine_auth_token={self.token}"
+        request.headers["Cookie"] = f"{existing_cookie}; {fine_cookie}" if existing_cookie else fine_cookie
+
+
+@dataclass
+class NoAuth:
+    def apply(self, request: httpx.Request) -> None:
+        return None
 
 
 def build_auth_provider(settings: FDLSettings) -> AuthProvider:
@@ -93,4 +106,9 @@ def build_auth_provider(settings: FDLSettings) -> AuthProvider:
         return AkSkSignatureAuth(client_id=settings.client_id or "", secret=settings.secret or "")
     if settings.auth_mode == "appcode":
         return AppCodeAuth(appcode=settings.appcode or "")
-    return FineAuthTokenAuth(token=settings.fine_auth_token or "")
+    if settings.auth_mode == "fine_auth_token":
+        return FineAuthTokenAuth(
+            token=settings.fine_auth_token or "",
+            cookie_header=settings.fine_auth_cookie,
+        )
+    return NoAuth()
