@@ -2,6 +2,10 @@
 
 `fdl-mcp` 是一个面向 FineDataLink 的 MCP Server，目标是把 FDL 的任务执行能力和数据开发接口封装成可被 Agent 直接调用的工具集。
 
+> 状态说明
+>
+> 这是一个半成品项目，目前更接近“可运行的实验性原型”而不是生产级成品。它已经覆盖一部分真实可用的 FineDataLink 任务执行与数据开发能力，但接口覆盖、环境兼容性、异常处理、文档完整度和稳定性都还在持续补齐。
+
 它覆盖两类能力：
 
 - 官方任务侧 API：按 `workId` 或 `workName` 执行工作流、查询记录、终止执行、调用数据服务。
@@ -243,6 +247,7 @@ uv run pytest tests/test_config.py tests/test_server.py tests/test_dev_services.
 
 ## 当前边界
 
+- 这是一个半成品仓库，适合调研、二次开发和受控环境验证，不应直接视为生产就绪方案。
 - 项目聚焦 FineDataLink `数据开发` 与任务执行，不覆盖整个平台所有模块。
 - 浏览器自动化仅作为会话提取和接口确认手段，不应作为最终集成方案。
 - 开发态接口是否需要加密、请求头细节、字段语义，可能随环境变化，跨环境必须重新验证。
@@ -256,4 +261,4 @@ uv run pytest tests/test_config.py tests/test_server.py tests/test_dev_services.
 
 ## 许可证
 
-仓库当前未声明开源许可证。如需公开发布，建议补充 `LICENSE` 文件后再推送。
+本项目使用 MIT License，详见 `LICENSE`。
